@@ -23,6 +23,7 @@ vldtnTrjctry = filterData(vldtnTrjctry);
 % given parameters
 tau_msrd = []; 
 tau_pred = [];
+tau_fr = [];
 for i = 1:length(vldtnTrjctry.t)
     qi = vldtnTrjctry.q(i,:)';
     qdi = vldtnTrjctry.qd_fltrd(i,:)';
@@ -37,6 +38,9 @@ for i = 1:length(vldtnTrjctry.t)
     
     tau_msrd = horzcat(tau_msrd, diag(drvGains)*vldtnTrjctry.i(i,:)');
     tau_pred = horzcat(tau_pred, [Ybi Yfrctni]*[pi_b; pi_fr]);
+    tau_fr = horzcat(tau_fr, Yfrctni * pi_fr);
+
+    pi_full = Yi*baseQR.permutationMatrix(:,1:baseQR.numberOfBaseParameters)*pi_b;
 end
 
 % Calculate relative residual error
@@ -46,15 +50,41 @@ for i = 1:6
 end
 
 % Plot measured torques against predicted ones
+% for i = 1:6
+%     figure
+%     hold on
+%     plot(vldtnTrjctry.t, tau_msrd(i,:), 'LineWidth', 1.2)
+%     plot(vldtnTrjctry.t, tau_pred(i,:), 'LineWidth', 1)
+%     ylabel('\tau, Nm')
+%     xlabel('t, sec')
+%     legend('measured', 'predicted')
+%     grid on
+% end
 for i = 1:6
-    figure
-    hold on
-    plot(vldtnTrjctry.t, tau_msrd(i,:), 'LineWidth', 1.2)
-    plot(vldtnTrjctry.t, tau_pred(i,:), 'LineWidth', 1)
-    ylabel('\tau, Nm')
-    xlabel('t, sec')
-    legend('measured', 'predicted')
-    grid on
+    figure;
+    
+    % 力矩图
+    subplot(3,1,1);
+    hold on;
+    plot(vldtnTrjctry.t, tau_msrd(i,:), 'LineWidth', 1.2);
+    plot(vldtnTrjctry.t, tau_pred(i,:), 'LineWidth', 1);
+    ylabel('\tau, Nm');
+    legend('measured', 'predicted');
+    grid on;
+    
+    % 速度图
+    subplot(3,1,2);
+    plot(vldtnTrjctry.t, vldtnTrjctry.qd_fltrd(:,i), 'LineWidth', 1);
+    ylabel('Velocity, rad/s');
+    xlabel('t, sec');
+    grid on;
+    
+    % 库仑摩擦导致的扭矩图
+    subplot(3,1,3);
+    plot(vldtnTrjctry.t, tau_fr(i,:), 'LineWidth', 1);
+    ylabel('Coulomb Torque, Nm');
+    xlabel('t, sec');
+    grid on;
 end
 
 

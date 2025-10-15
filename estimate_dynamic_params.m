@@ -43,7 +43,7 @@ idntfcnTrjctry = filterData(idntfcnTrjctry);
 sol = struct;
 if strcmp(method, 'OLS')
     % Usual least squares
-    [sol.pi_b, sol.pi_fr] = ordinaryLeastSquareEstimation(Tau, Wb);
+    [sol.pi_b, sol.pi_fr] = ordinaryLeastSquareEstimation(Tau, Wb, baseQR);
 elseif strcmp(method, 'PC-OLS')
     % Physically consistent OLS using SDP optimization
     [sol.pi_b, sol.pi_fr, sol.pi_s] = physicallyConsistentEstimation(Tau, Wb, baseQR);
@@ -60,6 +60,7 @@ sqrd_sgma_e = norm(Tau - Wb*[sol.pi_b; sol.pi_fr], 2)^2/...
             
 % the covariance matrix of the estimation error
 Cpi = sqrd_sgma_e*inv(Wb'*Wb);
+% Cpi = sqrd_sgma_e/(Wb'*Wb);
 sol.std = sqrt(diag(Cpi));
 
 % relative standard deviation
@@ -74,9 +75,20 @@ function [Tau, Wb] = buildObservationMatrices(idntfcnTrjctry, baseQR, drvGains)
 
     Wb = []; Tau = []; 
     for i = 1:1:length(idntfcnTrjctry.t)
-         Yi = regressorWithMotorDynamics(idntfcnTrjctry.q(i,:)',...
+         % Yi = regressorWithMotorDynamics(idntfcnTrjctry.q(i,:)',...
+         %                                 idntfcnTrjctry.qd_fltrd(i,:)',...
+         %                                 idntfcnTrjctry.q2d_est(i,:)');
+        % 
+        % Yfrctni = frictionRegressor(idntfcnTrjctry.qd_fltrd(i,:)');
+        % Ybi = [Yi*E1, Yfrctni];
+        % 
+        % Wb = vertcat(Wb, Ybi);
+        % Tau = vertcat(Tau, diag(drvGains)*idntfcnTrjctry.i_fltrd(i,:)');
+
+        Yi = standard_regressor_UR10E(idntfcnTrjctry.q(i,:)',...
                                          idntfcnTrjctry.qd_fltrd(i,:)',...
                                          idntfcnTrjctry.q2d_est(i,:)');
+
         Yfrctni = frictionRegressor(idntfcnTrjctry.qd_fltrd(i,:)');
         Ybi = [Yi*E1, Yfrctni];
 
@@ -86,12 +98,17 @@ function [Tau, Wb] = buildObservationMatrices(idntfcnTrjctry, baseQR, drvGains)
 end
 
 
-function [pib_OLS, pifrctn_OLS] = ordinaryLeastSquareEstimation(Tau, Wb)
+function [pib_OLS, pifrctn_OLS] = ordinaryLeastSquareEstimation(Tau, Wb, baseQR)
     % Function perfroms ordinary least squares estimation of parameters
     pi_OLS = (Wb'*Wb)\(Wb'*Tau);
+    
+    n = baseQR.numberOfBaseParameters;
 
-    pib_OLS = pi_OLS(1:40); % variables for base paramters
-    pifrctn_OLS = pi_OLS(41:end);
+    pib_OLS = pi_OLS(1:n); % variables for base paramters
+    pifrctn_OLS = pi_OLS(n+1:end);
+
+    % pib_OLS = pi_OLS(1:40); % variables for base paramters
+    % pifrctn_OLS = pi_OLS(41:end);
 end
 
 

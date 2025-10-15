@@ -19,12 +19,17 @@ function data = filterData(data)
 % Filtering Velocities
 % ---------------------------------------------------------------------
 % Design filter
-vel_filt = designfilt('lowpassiir','FilterOrder',5, ...
-        'HalfPowerFrequency',0.15,'DesignMethod','butter');
+% vel_filt = designfilt('lowpassiir','FilterOrder',5, ...
+%         'HalfPowerFrequency',0.15,'DesignMethod','butter');
+% data.qd_fltrd = zeros(size(data.qd));
+% for i = 1:6
+%     data.qd_fltrd(:,i) = filtfilt(vel_filt,data.qd(:,i));
+% end
 
+[b, a] = butter(5, 0.1);
 data.qd_fltrd = zeros(size(data.qd));
 for i = 1:6
-    data.qd_fltrd(:,i) = filtfilt(vel_filt,data.qd(:,i));
+    data.qd_fltrd(:, i) = filtfilt(b, a, data.qd(:,i));
 end
 
 % ------------------------------------------------------------------------

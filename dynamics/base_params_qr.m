@@ -17,7 +17,8 @@ function [pi_lgr_base, baseQR] = base_params_qr(includeMotorDynamics)
 % strandard one.
 % ----------------------------------------------------------------------
 % Seed the random number generator based on the current time
-rng('shuffle');
+% rng('shuffle');
+rng('default');
 
 % ------------------------------------------------------------------------
 % Set limits on posistion and velocities
@@ -72,7 +73,7 @@ for i = 1:25
     if includeMotorDynamics
         Y = regressorWithMotorDynamics(q_rnd,qd_rnd,q2d_rnd);
     else
-        Y = full_regressor_UR10E(q_rnd,qd_rnd,q2d_rnd);
+        Y = standard_regressor_UR10E(q_rnd,qd_rnd,q2d_rnd);
     end
     W = vertcat(W,Y);
 end

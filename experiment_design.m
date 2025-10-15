@@ -12,11 +12,13 @@
 % parameters into a file.
 % ---------------------------------------------------------------------
 % get robot description
+clear; close all; clc;
+
 path_to_urdf = 'ur10e.urdf';
 ur10 = parse_urdf(path_to_urdf);
 
 % get mapping from full parameters to base parameters
-include_motor_dynamics = 1;
+include_motor_dynamics = 0;
 [~, baseQR] = base_params_qr(include_motor_dynamics);
 
 % Choose optimization algorithm: 'patternsearch', 'ga'
@@ -27,13 +29,24 @@ traj_par.T = 25;          % period of signal
 traj_par.wf = 2*pi/traj_par.T;    % fundamental frequency
 traj_par.t_smp = 2e-1;   % sampling time
 traj_par.t = 0:traj_par.t_smp:traj_par.T;  % time
-traj_par.N = 7;          % number of harmonics
+traj_par.N = 5;          % number of harmonics
 traj_par.q0 = deg2rad([0 -90 0 -90 0 0 ]');
 % Use different limit for positions for safety
 traj_par.q_min = -deg2rad([180  180  100   180  90   90]');
 traj_par.q_max =  deg2rad([180  0    100   0    90   90]');
+
+qd_max = deg2rad([120 120 180 234 240 240]');
+
 traj_par.qd_max = qd_max;
 traj_par.q2d_max = [2 1 1 1 1 2.5]';
+
+% traj_par.q_min = -deg2rad([175 175 175 175 175 175]');
+% traj_par.q_max =  deg2rad([-175 -175 -175 -175 -175 -175]');
+% 
+% qd_max = deg2rad([120 120 180 234 240 240]');
+% 
+% traj_par.qd_max = qd_max;
+% traj_par.q2d_max = [2 1 1 1 1 2.5]';
 
 %  ----------------------------------------------------------------------
 % Otimization
@@ -112,3 +125,12 @@ elseif strcmp(optmznAlgorithm, 'fmincon')
 end
 save(filename,'a','b','c_pol','traj_par')
 %}
+
+% 拼接轨迹数据为矩阵：[time, q1~q6, qd1~qd6, qdd1~qdd6]
+data_to_save = [traj_par.t(:), q', qd', q2d'];
+
+% 写入CSV文件
+csv_filename = fullfile(pathToFolder, ['trajectory_', t1, '.csv']);
+writematrix(data_to_save, csv_filename);
+
+disp(['Trajectory data saved to CSV: ', csv_filename]);
